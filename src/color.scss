@@ -1,0 +1,46 @@
+/* ================================
+   Carrot Global Color Palette
+   ================================ */
+
+:root {
+  /* 🥕 Naranjas (marca principal) */
+  --carrot-orange: #E06B2B;
+  --carrot-light-orange: #FAA13F;
+  --soft-orange: #FFE4CC;
+
+  /* 🌱 Verdes (naturaleza / secundario) */
+  --carrot-dark-green: #51672D;
+  --carrot-light-green: #96B960;
+
+  /* 🌰 Marrones (tierra / backend) */
+  --carrot-brown: #774835;
+  --carrot-brown-light: #9A6148;
+
+  /* 🧈 Fondos claros */
+  --cream: #FFF5E6;
+  --white: #FFFFFF;
+
+  /* 🌑 Fondo oscuro */
+  --dark-bg: #2D1F1A;
+
+  /* 🌟 Acento */
+  --accent-yellow: #FFC857;
+
+  /* 🎨 Colores adicionales para estados */
+  --success: var(--carrot-light-green);
+  --error: #D84315;
+  --warning: var(--accent-yellow);
+  --info: #2196F3;
+
+  /* Sombras y efectos */
+  --shadow-sm: 0 2px 8px rgba(224, 107, 43, 0.1);
+  --shadow-md: 0 4px 16px rgba(224, 107, 43, 0.15);
+  --shadow-lg: 0 8px 32px rgba(224, 107, 43, 0.2);
+  --shadow-xl: 0 16px 48px rgba(224, 107, 43, 0.25);
+
+  /* Degradados orgánicos */
+  --gradient-warm: linear-gradient(135deg, var(--carrot-orange) 0%, var(--carrot-light-orange) 100%);
+  --gradient-earth: linear-gradient(135deg, var(--carrot-brown) 0%, var(--carrot-orange) 100%);
+  --gradient-fresh: linear-gradient(135deg, var(--carrot-light-green) 0%, var(--carrot-dark-green) 100%);
+  --gradient-sunset: linear-gradient(135deg, var(--accent-yellow) 0%, var(--carrot-orange) 50%, var(--carrot-brown) 100%);
+}
