@@ -1,0 +1,31 @@
+<div class="chat-container">
+  <div class="chat-header">
+    <div class="header-content">
+      <h1>🥕 Carrot Chat</h1>
+      <div class="user-info" *ngIf="currentUser$ | async as user">
+        <span class="username">{{ user.username }}</span>
+        <button class="btn-logout" (click)="logout()">Cerrar Sesión</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="chat-content">
+    <div class="welcome-message">
+      <div class="carrot-icon">🥕</div>
+      <h2>¡Bienvenido a Carrot Chat!</h2>
+      <p>Esta es una página placeholder para el módulo de chat.</p>
+      <p>Aquí implementarás toda la funcionalidad de mensajería.</p>
+
+      <div class="next-steps">
+        <h3>Próximos pasos:</h3>
+        <ul>
+          <li>Implementar lista de contactos</li>
+          <li>Crear componente de conversación</li>
+          <li>Integrar WebSocket para mensajes en tiempo real</li>
+          <li>Añadir notificaciones</li>
+          <li>Implementar búsqueda de usuarios</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
