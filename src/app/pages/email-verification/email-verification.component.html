@@ -1,0 +1,76 @@
+<div class="verification-container">
+  <!-- Background decorations -->
+  <div class="bg-decoration decoration-1"></div>
+  <div class="bg-decoration decoration-2"></div>
+
+  <!-- Verification card -->
+  <div class="verification-card">
+    <!-- Verifying state -->
+    <div class="verification-content" *ngIf="status === 'verifying'">
+      <div class="icon-wrapper verifying">
+        <div class="carrot-spinner">🥕</div>
+      </div>
+      <h1>Verificando tu email...</h1>
+      <p>Por favor espera un momento mientras confirmamos tu cuenta.</p>
+      <div class="progress-bar">
+        <div class="progress-fill"></div>
+      </div>
+    </div>
+
+    <!-- Success state -->
+    <div class="verification-content" *ngIf="status === 'success'">
+      <div class="icon-wrapper success">
+        <div class="success-checkmark">
+          <svg viewBox="0 0 52 52" class="checkmark">
+            <circle class="checkmark-circle" cx="26" cy="26" r="25" fill="none"/>
+            <path class="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+          </svg>
+        </div>
+      </div>
+      <h1>¡Email Verificado! 🎉</h1>
+      <p class="success-message">{{ message }}</p>
+      <div class="confetti">
+        <div class="confetti-piece"></div>
+        <div class="confetti-piece"></div>
+        <div class="confetti-piece"></div>
+        <div class="confetti-piece"></div>
+        <div class="confetti-piece"></div>
+        <div class="confetti-piece"></div>
+      </div>
+      <button class="btn btn-primary" (click)="navigateToAuth()">
+        Ir a Iniciar Sesión
+      </button>
+      <p class="auto-redirect">Serás redirigido automáticamente en unos segundos...</p>
+    </div>
+
+    <!-- Error state -->
+    <div class="verification-content" *ngIf="status === 'error'">
+      <div class="icon-wrapper error">
+        <div class="error-icon">
+          <svg viewBox="0 0 52 52" class="error-mark">
+            <circle class="error-circle" cx="26" cy="26" r="25" fill="none"/>
+            <path class="error-cross" fill="none" d="M16 16 36 36 M36 16 16 36"/>
+          </svg>
+        </div>
+      </div>
+      <h1>Error de Verificación</h1>
+      <p class="error-message">{{ message }}</p>
+      <div class="error-actions">
+        <button class="btn btn-secondary" (click)="navigateToAuth()">
+          Volver al Login
+        </button>
+      </div>
+      <p class="help-text">
+        Si el problema persiste, solicita un nuevo enlace de verificación desde la página de login.
+      </p>
+    </div>
+
+    <!-- Decorative carrot -->
+    <div class="floating-carrot">🥕</div>
+  </div>
+
+  <!-- Footer -->
+  <div class="verification-footer">
+    <p>© 2026 Carrot Chat • Tu app de chat más fresca</p>
+  </div>
+</div>
