@@ -1,0 +1,243 @@
+<div class="auth-container">
+  <!-- Background decorations -->
+  <div class="bg-decoration decoration-1"></div>
+  <div class="bg-decoration decoration-2"></div>
+  <div class="bg-decoration decoration-3"></div>
+  <div class="carrot-icon floating"></div>
+
+  <!-- Main auth card -->
+  <div class="auth-card">
+    <!-- Logo and brand -->
+    <div class="auth-header">
+      <div class="logo">
+        <svg viewBox="0 0 100 100" class="carrot-logo">
+          <path d="M50 10 L45 15 Q40 20 40 30 L40 70 Q40 85 50 90 Q60 85 60 70 L60 30 Q60 20 55 15 Z"
+                fill="currentColor"/>
+          <path d="M50 10 L48 5 L46 8 L45 5 L44 8 L43 5"
+                stroke="currentColor"
+                fill="none"
+                stroke-width="2"/>
+        </svg>
+      </div>
+      <h1 class="brand-name">Carrot</h1>
+      <p class="brand-tagline">Tu app de chat más fresca 🥕</p>
+    </div>
+
+    <!-- Mode toggle switch -->
+    <div class="mode-toggle">
+      <button
+        type="button"
+        class="toggle-btn"
+        [class.active]="isLoginMode"
+        (click)="isLoginMode = true; resetForms()">
+        Iniciar Sesión
+      </button>
+      <button
+        type="button"
+        class="toggle-btn"
+        [class.active]="!isLoginMode"
+        (click)="isLoginMode = false; resetForms()">
+        Registrarse
+      </button>
+      <div class="toggle-slider" [class.right]="!isLoginMode"></div>
+    </div>
+
+    <!-- Alert message -->
+    <div class="alert-container" *ngIf="alertMessage" [@slideDown]>
+      <div class="alert" [class]="'alert-' + alertMessage.type">
+        <div class="alert-icon">
+          <span *ngIf="alertMessage.type === 'success'">✓</span>
+          <span *ngIf="alertMessage.type === 'error'">✕</span>
+          <span *ngIf="alertMessage.type === 'warning'">!</span>
+          <span *ngIf="alertMessage.type === 'info'">i</span>
+        </div>
+        <div class="alert-content">
+          <p>{{ alertMessage.message }}</p>
+          <button
+            type="button"
+            class="btn-resend"
+            *ngIf="alertMessage.type === 'warning' && alertMessage.message.includes('verificar')"
+            (click)="resendVerification()">
+            Reenviar email de verificación
+          </button>
+        </div>
+        <button type="button" class="alert-close" (click)="closeAlert()">×</button>
+      </div>
+    </div>
+
+    <!-- Login Form -->
+    <form *ngIf="isLoginMode" [formGroup]="loginForm" (ngSubmit)="onLogin()" class="auth-form">
+      <div class="form-group">
+        <label for="usernameOrEmail">Usuario o Email</label>
+        <div class="input-wrapper">
+          <input
+            type="text"
+            id="usernameOrEmail"
+            formControlName="usernameOrEmail"
+            placeholder="tu_usuario o email@ejemplo.com"
+            [class.error]="hasError(loginForm, 'usernameOrEmail', 'required')"
+          />
+          <span class="input-icon">👤</span>
+        </div>
+        <span class="error-message" *ngIf="hasError(loginForm, 'usernameOrEmail', 'required')">
+          Este campo es obligatorio
+        </span>
+      </div>
+
+      <div class="form-group">
+        <label for="login-password">Contraseña</label>
+        <div class="input-wrapper">
+          <input
+            [type]="showPassword ? 'text' : 'password'"
+            id="login-password"
+            formControlName="password"
+            placeholder="••••••••"
+            [class.error]="hasError(loginForm, 'password', 'required') || hasError(loginForm, 'password', 'minlength')"
+          />
+          <button
+            type="button"
+            class="toggle-password"
+            (click)="togglePasswordVisibility('password')">
+            {{ showPassword ? '👁️' : '👁️‍🗨️' }}
+          </button>
+        </div>
+        <span class="error-message" *ngIf="hasError(loginForm, 'password', 'required')">
+          La contraseña es obligatoria
+        </span>
+        <span class="error-message" *ngIf="hasError(loginForm, 'password', 'minlength')">
+          La contraseña debe tener al menos 6 caracteres
+        </span>
+      </div>
+
+      <button type="submit" class="btn btn-primary" [disabled]="loading">
+        <span *ngIf="!loading">Iniciar Sesión 🥕</span>
+        <span *ngIf="loading" class="loader"></span>
+      </button>
+    </form>
+
+    <!-- Register Form -->
+    <form *ngIf="!isLoginMode" [formGroup]="registerForm" (ngSubmit)="onRegister()" class="auth-form">
+      <div class="form-group">
+        <label for="username">Usuario *</label>
+        <div class="input-wrapper">
+          <input
+            type="text"
+            id="username"
+            formControlName="username"
+            placeholder="tu_usuario_carrot"
+            [class.error]="hasError(registerForm, 'username', 'required') ||
+                          hasError(registerForm, 'username', 'minlength') ||
+                          hasError(registerForm, 'username', 'maxlength')"
+          />
+          <span class="input-icon">👤</span>
+        </div>
+        <span class="error-message" *ngIf="hasError(registerForm, 'username', 'required')">
+          El usuario es obligatorio
+        </span>
+        <span class="error-message" *ngIf="hasError(registerForm, 'username', 'minlength')">
+          Mínimo 3 caracteres
+        </span>
+      </div>
+
+      <div class="form-group">
+        <label for="email">Email *</label>
+        <div class="input-wrapper">
+          <input
+            type="email"
+            id="email"
+            formControlName="email"
+            placeholder="tu@email.com"
+            [class.error]="hasError(registerForm, 'email', 'required') ||
+                          hasError(registerForm, 'email', 'email')"
+          />
+          <span class="input-icon">📧</span>
+        </div>
+        <span class="error-message" *ngIf="hasError(registerForm, 'email', 'required')">
+          El email es obligatorio
+        </span>
+        <span class="error-message" *ngIf="hasError(registerForm, 'email', 'email')">
+          Ingresa un email válido
+        </span>
+      </div>
+
+      <div class="form-group">
+        <label for="fullName">Nombre completo</label>
+        <div class="input-wrapper">
+          <input
+            type="text"
+            id="fullName"
+            formControlName="fullName"
+            placeholder="Tu nombre (opcional)"
+          />
+          <span class="input-icon">✨</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="register-password">Contraseña *</label>
+        <div class="input-wrapper">
+          <input
+            [type]="showPassword ? 'text' : 'password'"
+            id="register-password"
+            formControlName="password"
+            placeholder="••••••••"
+            [class.error]="hasError(registerForm, 'password', 'required') ||
+                          hasError(registerForm, 'password', 'minlength')"
+          />
+          <button
+            type="button"
+            class="toggle-password"
+            (click)="togglePasswordVisibility('password')">
+            {{ showPassword ? '👁️' : '👁️‍🗨️' }}
+          </button>
+        </div>
+        <span class="error-message" *ngIf="hasError(registerForm, 'password', 'required')">
+          La contraseña es obligatoria
+        </span>
+        <span class="error-message" *ngIf="hasError(registerForm, 'password', 'minlength')">
+          Mínimo 6 caracteres
+        </span>
+      </div>
+
+      <div class="form-group">
+        <label for="confirmPassword">Confirmar contraseña *</label>
+        <div class="input-wrapper">
+          <input
+            [type]="showConfirmPassword ? 'text' : 'password'"
+            id="confirmPassword"
+            formControlName="confirmPassword"
+            placeholder="••••••••"
+            [class.error]="hasError(registerForm, 'confirmPassword', 'required') ||
+                          hasError(registerForm, 'confirmPassword', 'passwordMismatch')"
+          />
+          <button
+            type="button"
+            class="toggle-password"
+            (click)="togglePasswordVisibility('confirmPassword')">
+            {{ showConfirmPassword ? '👁️' : '👁️‍🗨️' }}
+          </button>
+        </div>
+        <span class="error-message" *ngIf="hasError(registerForm, 'confirmPassword', 'required')">
+          Confirma tu contraseña
+        </span>
+        <span class="error-message" *ngIf="hasError(registerForm, 'confirmPassword', 'passwordMismatch')">
+          Las contraseñas no coinciden
+        </span>
+      </div>
+
+      <button type="submit" class="btn btn-primary" [disabled]="loading">
+        <span *ngIf="!loading">Crear Cuenta 🌱</span>
+        <span *ngIf="loading" class="loader"></span>
+      </button>
+
+      <p class="form-note">
+        * Al registrarte, recibirás un email de verificación
+      </p>
+    </form>
+  </div>
+
+  <!-- Footer -->
+  <div class="auth-footer">
+    <p>© 2026 Carrot Chat • Hecho con 🥕 y ❤️</p>
+  </div>
+</div>
