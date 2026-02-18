@@ -1,31 +1,442 @@
-<div class="chat-container">
-  <div class="chat-header">
-    <div class="header-content">
-      <h1>🥕 Carrot Chat</h1>
-      <div class="user-info" *ngIf="currentUser$ | async as user">
-        <span class="username">{{ user.username }}</span>
-        <button class="btn-logout" (click)="logout()">Cerrar Sesión</button>
+<div class="chat-shell">
+
+  <!-- ═══════════════════════════════════════════
+       SIDEBAR
+  ════════════════════════════════════════════ -->
+  <aside class="sidebar">
+
+    <!-- Brand -->
+    <div class="sidebar-brand">
+      <span class="brand-icon">🥕</span>
+      <span class="brand-name">CarrotChat</span>
+    </div>
+
+    <!-- Current user -->
+    <div class="sidebar-me" *ngIf="currentUser">
+      <div class="avatar-wrap">
+        <img *ngIf="currentUser.avatarUrl" [src]="currentUser.avatarUrl" [alt]="currentUser.username" class="avatar" />
+        <div *ngIf="!currentUser.avatarUrl" class="avatar avatar-initials">
+          {{ getInitials(currentUser.fullName || currentUser.username) }}
+        </div>
+        <span class="status-dot" [style.background]="getStatusColor(currentUser.status)"></span>
+      </div>
+      <div class="me-info">
+        <span class="me-name">{{ currentUser.fullName || currentUser.username }}</span>
+        <span class="me-handle">{{ '@' + currentUser.username }}</span>
+      </div>
+      <button class="btn-icon" (click)="logout()" title="Cerrar sesión">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Tab switcher -->
+    <div class="sidebar-tabs">
+      <button class="tab-btn" [class.active]="sidebarTab === 'chats'" (click)="sidebarTab = 'chats'">
+        Chats
+      </button>
+      <button class="tab-btn" [class.active]="sidebarTab === 'users'" (click)="sidebarTab = 'users'; loadOnlineUsers()">
+        Usuarios
+      </button>
+    </div>
+
+    <!-- CHATS TAB -->
+    <ng-container *ngIf="sidebarTab === 'chats'">
+
+      <!-- Search + actions -->
+      <div class="sidebar-search">
+        <div class="search-box">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+          </svg>
+          <input type="text" placeholder="Buscar chats..." [(ngModel)]="searchRoomQuery" />
+        </div>
+        <button class="btn-icon btn-new" (click)="showNewChatModal = true" title="Nuevo chat">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M12 5v14M5 12h14"/>
+          </svg>
+        </button>
+        <button class="btn-icon btn-new" (click)="showCreateGroupModal = true" title="Nuevo grupo">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Room list -->
+      <div class="room-list">
+        <div
+          *ngFor="let room of filteredRooms"
+          class="room-item"
+          [class.active]="selectedRoom?.id === room.id"
+          (click)="selectRoom(room)"
+        >
+          <div class="room-avatar-wrap">
+            <img *ngIf="getRoomAvatar(room)" [src]="getRoomAvatar(room)!" [alt]="getRoomName(room)" class="avatar" />
+            <div *ngIf="!getRoomAvatar(room)" class="avatar avatar-initials">
+              {{ getInitials(getRoomName(room)) }}
+            </div>
+            <span
+              *ngIf="room.type === ChatRoomType.PRIVATE && getOtherParticipant(room)"
+              class="status-dot"
+              [style.background]="getStatusColor(getOtherParticipant(room)!.status)"
+            ></span>
+            <span *ngIf="room.type === ChatRoomType.GROUP" class="group-badge">G</span>
+          </div>
+
+          <div class="room-info">
+            <div class="room-row1">
+              <span class="room-name">{{ getRoomName(room) }}</span>
+              <span class="room-time">{{ formatRoomTime(room) }}</span>
+            </div>
+            <div class="room-row2">
+              <span class="room-preview">
+                {{ room.lastMessage?.content || 'Sin mensajes aún' }}
+              </span>
+              <span *ngIf="room.unreadCount > 0" class="unread-badge">{{ room.unreadCount }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div *ngIf="filteredRooms.length === 0" class="empty-state">
+          <span>🥕</span>
+          <p>No hay chats todavía</p>
+          <small>Creá uno nuevo con el botón +</small>
+        </div>
+      </div>
+
+    </ng-container>
+
+    <!-- USERS TAB -->
+    <ng-container *ngIf="sidebarTab === 'users'">
+      <div class="sidebar-search">
+        <div class="search-box full">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+          </svg>
+          <input type="text" placeholder="Buscar usuarios..." [(ngModel)]="searchUserQuery" />
+        </div>
+      </div>
+
+      <div class="room-list">
+        <div
+          *ngFor="let user of filteredUsers"
+          class="room-item"
+          (click)="openPrivateChat(user)"
+        >
+          <div class="room-avatar-wrap">
+            <img *ngIf="user.avatarUrl" [src]="user.avatarUrl" [alt]="user.username" class="avatar" />
+            <div *ngIf="!user.avatarUrl" class="avatar avatar-initials">{{ getInitials(user.fullName || user.username) }}</div>
+            <span class="status-dot" [style.background]="getStatusColor(user.status)"></span>
+          </div>
+          <div class="room-info">
+            <div class="room-row1">
+              <span class="room-name">{{ user.fullName || user.username }}</span>
+              <span class="user-status-label" [style.color]="getStatusColor(user.status)">{{ user.status }}</span>
+            </div>
+            <div class="room-row2">
+              <span class="room-preview">{{'@' + user.username }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div *ngIf="filteredUsers.length === 0" class="empty-state">
+          <span>🥕</span>
+          <p>No hay usuarios</p>
+        </div>
+      </div>
+    </ng-container>
+
+  </aside>
+
+  <!-- ═══════════════════════════════════════════
+       MAIN AREA
+  ════════════════════════════════════════════ -->
+  <main class="chat-main">
+
+    <!-- No room selected -->
+    <div *ngIf="!selectedRoom" class="no-room">
+      <div class="no-room-inner">
+        <div class="carrot-hero">🥕</div>
+        <h2>Bienvenido a CarrotChat</h2>
+        <p>Seleccioná una conversación o creá una nueva para empezar a chatear.</p>
+        <div class="hero-actions">
+          <button class="btn-primary" (click)="showNewChatModal = true">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M12 5v14M5 12h14"/>
+            </svg>
+            Nuevo Chat Privado
+          </button>
+          <button class="btn-secondary" (click)="showCreateGroupModal = true">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+            Crear Grupo
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Room selected -->
+    <ng-container *ngIf="selectedRoom">
+
+      <!-- Chat header -->
+      <header class="chat-header">
+        <div class="header-left">
+          <div class="room-avatar-wrap">
+            <img *ngIf="getRoomAvatar(selectedRoom)" [src]="getRoomAvatar(selectedRoom)!" class="avatar" [alt]="getRoomName(selectedRoom)" />
+            <div *ngIf="!getRoomAvatar(selectedRoom)" class="avatar avatar-initials">
+              {{ getInitials(getRoomName(selectedRoom)) }}
+            </div>
+          </div>
+          <div class="header-info">
+            <span class="header-name">{{ getRoomName(selectedRoom) }}</span>
+            <span class="header-sub" *ngIf="selectedRoom.type === ChatRoomType.PRIVATE && getOtherParticipant(selectedRoom) as other">
+              <span class="status-dot-inline" [style.background]="getStatusColor(other.status)"></span>
+              {{ other.status === UserStatus.ONLINE ? 'En línea' : 'Desconectado' }}
+            </span>
+            <span class="header-sub" *ngIf="selectedRoom.type === ChatRoomType.GROUP">
+              {{ selectedRoom.participantCount }} participantes
+            </span>
+          </div>
+        </div>
+
+        <div class="header-actions">
+          <button class="btn-icon" (click)="showRoomInfo = !showRoomInfo" title="Info">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>
+            </svg>
+          </button>
+          <button class="btn-icon btn-leave" (click)="leaveRoom()" title="Abandonar sala">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <!-- Messages area -->
+      <div class="messages-area" #messagesContainer>
+
+        <div *ngIf="isLoadingMessages" class="loading-msgs">
+          <div class="carrot-spinner">🥕</div>
+          <span>Cargando mensajes...</span>
+        </div>
+
+        <div *ngIf="!isLoadingMessages && messages.length === 0" class="empty-msgs">
+          <span>🥕</span>
+          <p>¡Sé el primero en escribir!</p>
+        </div>
+
+        <div class="messages-list">
+          <div
+            *ngFor="let msg of messages"
+            class="msg-row"
+            [class.own]="isOwnMessage(msg)"
+          >
+            <!-- Avatar (solo para mensajes ajenos) -->
+            <div class="msg-avatar" *ngIf="!isOwnMessage(msg)">
+              <img *ngIf="msg.sender.avatarUrl" [src]="msg.sender.avatarUrl" class="avatar avatar-sm" [alt]="msg.sender.username" />
+              <div *ngIf="!msg.sender.avatarUrl" class="avatar avatar-sm avatar-initials">
+                {{ getInitials(msg.sender.fullName || msg.sender.username) }}
+              </div>
+            </div>
+
+            <div class="msg-content">
+              <span class="msg-sender" *ngIf="!isOwnMessage(msg) && selectedRoom.type === ChatRoomType.GROUP">
+                {{ msg.sender.username }}
+              </span>
+              <div class="msg-bubble" [class.own]="isOwnMessage(msg)">
+                <p class="msg-text">{{ msg.content }}</p>
+                <div class="msg-meta">
+                  <span class="msg-time">{{ formatTime(msg.sentAt) }}</span>
+                  <span class="msg-edited" *ngIf="msg.isEdited">(editado)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Typing indicator -->
+      <div class="typing-indicator" *ngIf="typingUsers.size > 0">
+        <div class="typing-dots">
+          <span></span><span></span><span></span>
+        </div>
+        <span class="typing-text">{{ getTypingText() }}</span>
+      </div>
+
+      <!-- Input -->
+      <footer class="input-area">
+        <div class="input-wrapper">
+          <textarea
+            #messageInput
+            [(ngModel)]="messageContent"
+            (keydown)="onKeyDown($event)"
+            (input)="onInput()"
+            placeholder="Escribí un mensaje... 🥕"
+            rows="1"
+          ></textarea>
+          <button
+            class="btn-send"
+            [class.ready]="messageContent.trim().length > 0"
+            (click)="sendMessage()"
+            [disabled]="!messageContent.trim()"
+          >
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M22 2 11 13M22 2 15 22l-4-9-9-4 20-7z"/>
+            </svg>
+          </button>
+        </div>
+      </footer>
+
+    </ng-container>
+
+  </main>
+
+  <!-- ═══════════════════════════════════════════
+       ROOM INFO PANEL
+  ════════════════════════════════════════════ -->
+  <aside class="info-panel" [class.open]="showRoomInfo && selectedRoom">
+    <ng-container *ngIf="selectedRoom">
+      <div class="info-header">
+        <h3>Información</h3>
+        <button class="btn-icon" (click)="showRoomInfo = false">✕</button>
+      </div>
+
+      <div class="info-avatar-wrap">
+        <img *ngIf="getRoomAvatar(selectedRoom)" [src]="getRoomAvatar(selectedRoom)!" class="info-avatar" />
+        <div *ngIf="!getRoomAvatar(selectedRoom)" class="info-avatar info-avatar-initials">
+          {{ getInitials(getRoomName(selectedRoom)) }}
+        </div>
+      </div>
+
+      <h4 class="info-name">{{ getRoomName(selectedRoom) }}</h4>
+      <p class="info-desc" *ngIf="selectedRoom.description">{{ selectedRoom.description }}</p>
+      <span class="info-type-badge">{{ selectedRoom.type }}</span>
+
+      <div class="info-section">
+        <h5>Participantes ({{ selectedRoom.participantCount }})</h5>
+        <div class="participant-list">
+          <div class="participant-item" *ngFor="let p of selectedRoom.participants">
+            <img *ngIf="p.avatarUrl" [src]="p.avatarUrl" class="avatar avatar-sm" />
+            <div *ngIf="!p.avatarUrl" class="avatar avatar-sm avatar-initials">{{ getInitials(p.fullName || p.username) }}</div>
+            <div class="participant-info">
+              <span class="participant-name">{{ p.fullName || p.username }}</span>
+              <span class="participant-handle">{{'@'+ p.username }}</span>
+            </div>
+            <span class="status-dot" [style.background]="getStatusColor(p.status)"></span>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+  </aside>
+
+</div>
+
+<!-- ═══════════════════════════════════════════
+     MODAL: Nuevo Chat Privado
+════════════════════════════════════════════ -->
+<div class="modal-overlay" *ngIf="showNewChatModal" (click)="showNewChatModal = false">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>🥕 Nuevo Chat</h3>
+      <button class="btn-icon" (click)="showNewChatModal = false">✕</button>
+    </div>
+
+    <div class="modal-search">
+      <div class="search-box full">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+        <input type="text" placeholder="Buscar por usuario..." [(ngModel)]="searchUserQuery" />
+      </div>
+    </div>
+
+    <div class="modal-user-list">
+      <div
+        *ngFor="let user of filteredUsers"
+        class="room-item modal-user-item"
+        (click)="openPrivateChat(user)"
+      >
+        <div class="room-avatar-wrap">
+          <img *ngIf="user.avatarUrl" ngSrc="user.avatarUrl" class="avatar" />
+          <div *ngIf="!user.avatarUrl" class="avatar avatar-initials">{{ getInitials(user.fullName || user.username) }}</div>
+          <span class="status-dot" [style.background]="getStatusColor(user.status)"></span>
+        </div>
+        <div class="room-info">
+          <span class="room-name">{{ user.fullName || user.username }}</span>
+          <span class="room-preview">{{'@'+ user.username }}</span>
+        </div>
       </div>
     </div>
   </div>
+</div>
 
-  <div class="chat-content">
-    <div class="welcome-message">
-      <div class="carrot-icon">🥕</div>
-      <h2>¡Bienvenido a Carrot Chat!</h2>
-      <p>Esta es una página placeholder para el módulo de chat.</p>
-      <p>Aquí implementarás toda la funcionalidad de mensajería.</p>
+<!-- ═══════════════════════════════════════════
+     MODAL: Crear Grupo
+════════════════════════════════════════════ -->
+<div class="modal-overlay" *ngIf="showCreateGroupModal" (click)="showCreateGroupModal = false">
+  <div class="modal modal-group" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>🥕 Crear Grupo</h3>
+      <button class="btn-icon" (click)="showCreateGroupModal = false">✕</button>
+    </div>
 
-      <div class="next-steps">
-        <h3>Próximos pasos:</h3>
-        <ul>
-          <li>Implementar lista de contactos</li>
-          <li>Crear componente de conversación</li>
-          <li>Integrar WebSocket para mensajes en tiempo real</li>
-          <li>Añadir notificaciones</li>
-          <li>Implementar búsqueda de usuarios</li>
-        </ul>
+    <div class="modal-body">
+      <div class="form-field">
+        <label>Nombre del grupo</label>
+        <input type="text" placeholder="Ej: Los Vegetales" [(ngModel)]="newGroupName" />
       </div>
+      <div class="form-field">
+        <label>Descripción (opcional)</label>
+        <input type="text" placeholder="¿De qué va el grupo?" [(ngModel)]="newGroupDescription" />
+      </div>
+
+      <div class="form-field">
+        <label>Agregar participantes</label>
+        <div class="search-box full">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+          </svg>
+          <input type="text" placeholder="Buscar usuarios..." [(ngModel)]="searchUserQuery" />
+        </div>
+      </div>
+
+      <div class="modal-user-list">
+        <div
+          *ngFor="let user of filteredUsers"
+          class="room-item modal-user-item selectable"
+          [class.selected]="isUserSelected(user.id)"
+          (click)="toggleUserSelection(user.id)"
+        >
+          <div class="room-avatar-wrap">
+            <img *ngIf="user.avatarUrl" [src]="user.avatarUrl" class="avatar" />
+            <div *ngIf="!user.avatarUrl" class="avatar avatar-initials">{{ getInitials(user.fullName || user.username) }}</div>
+          </div>
+          <div class="room-info">
+            <span class="room-name">{{ user.fullName || user.username }}</span>
+            <span class="room-preview">{{'@'+ user.username }}</span>
+          </div>
+          <div class="select-check" *ngIf="isUserSelected(user.id)">✓</div>
+        </div>
+      </div>
+
+      <div class="selected-count" *ngIf="selectedUserIds.length > 0">
+        {{ selectedUserIds.length }} participante(s) seleccionado(s)
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="showCreateGroupModal = false">Cancelar</button>
+      <button class="btn-primary" (click)="createGroupRoom()" [disabled]="!newGroupName.trim()">
+        Crear Grupo
+      </button>
     </div>
   </div>
 </div>
