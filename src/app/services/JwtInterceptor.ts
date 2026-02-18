@@ -9,20 +9,22 @@ export const jwtInterceptor: HttpInterceptorFn = (req, next) => {
   const router = inject(Router);
   const token = authService.getToken();
 
-  // Clone request and add authorization header if token exists
+  console.log('🥕 Interceptor fired:', req.url);
+  console.log('🥕 Token:', token ? token.substring(0, 20) + '...' : 'NULL');
+
   if (token) {
     req = req.clone({
-      setHeaders: {
-        Authorization: `Bearer ${token}`
-      }
+      setHeaders: { Authorization: `Bearer ${token}` }
     });
   }
 
   return next(req).pipe(
     catchError((error) => {
-      // If 401 Unauthorized, logout user
-      if (error.status === 401) {
-        authService.logout().subscribe();
+      console.log('🥕 Error status:', error.status, 'URL:', req.url);
+      if (error.status === 401 && !req.url.includes('/api/auth/')) {
+        localStorage.removeItem('carrot_auth_token');
+        localStorage.removeItem('carrot_user');
+        router.navigate(['/auth']);
       }
       return throwError(() => error);
     })

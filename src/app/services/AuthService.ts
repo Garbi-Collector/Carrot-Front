@@ -3,11 +3,9 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, BehaviorSubject, throwError } from 'rxjs';
 import { tap, catchError } from 'rxjs/operators';
 import { Router } from '@angular/router';
-import { UserRegistrationDTO } from '../models/UserRegistrationDTO';
-import { UserLoginDTO } from '../models/UserLoginDTO';
 import { AuthResponseDTO } from '../models/AuthResponseDTO';
 import { ApiResponseDTO } from '../models/ApiResponseDTO';
-import { UserDTO } from '../models/UserDTO';
+import {UserDTO, UserLoginDTO, UserRegistrationDTO} from '../models/user.models';
 
 @Injectable({
   providedIn: 'root'
