@@ -1,4 +1,5 @@
-import { UserDTO } from './UserDTO';
+import {UserDTO} from "./user.models";
+
 
 export interface AuthResponseDTO {
   token: string | null;
